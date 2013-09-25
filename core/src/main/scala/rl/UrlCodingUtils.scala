@@ -83,7 +83,8 @@ trait UrlCodingUtils {
               out.put(yc.toByte)
             }
           } else {
-            in.position(mark)
+            out.put('%'.toByte)
+            in.position(mark+1)
           }
         } else {
           in.position(in.position() - 1)
