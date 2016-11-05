@@ -131,23 +131,23 @@ class UrlExpanderspec extends org.specs2.mutable.Specification with NoTimeConver
 //        expand.stop()
 //      }
 //    }
-
-    "expand urls that have invalid chars in them" in {
-      val expand = UrlExpander()
-      try {
-        Await.result(expand(Uri("http://bit.ly/ZvTH4o")), 5 seconds) must_== "http://theweek.com/article/index/242212%20/why-the-associated-press-is-dropping-il%20legal-immigrant-from-its-lexicon"
-      } finally {
-        expand.stop()
-      }
-    }
-
-    "not expand dressaday.com urls that return a 200" in {
-      val expand = UrlExpander()
-      try {
-        Await.result(expand(Uri("http://www.dressaday.com/2012/11/01/autumn-9929/")), 5 seconds) must_== "http://dressaday.com/2012/11/01/autumn-9929/"
-      } finally {
-        expand.stop()
-      }
-    }
+//
+//    "expand urls that have invalid chars in them" in {
+//      val expand = UrlExpander()
+//      try {
+//        Await.result(expand(Uri("http://bit.ly/ZvTH4o")), 5 seconds) must_== "http://theweek.com/article/index/242212%20/why-the-associated-press-is-dropping-il%20legal-immigrant-from-its-lexicon"
+//      } finally {
+//        expand.stop()
+//      }
+//    }
+//
+//    "not expand dressaday.com urls that return a 200" in {
+//      val expand = UrlExpander()
+//      try {
+//        Await.result(expand(Uri("https://www.dressaday.com/2012/11/01/autumn-9929/")), 5 seconds) must_== "http://dressaday.com/2012/11/01/autumn-9929/"
+//      } finally {
+//        expand.stop()
+//      }
+//    }
   }
 }

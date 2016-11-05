@@ -4,6 +4,7 @@ package expand
 import org.jboss.netty.bootstrap.ServerBootstrap
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
 import java.util.concurrent.Executors
+
 import org.jboss.netty.channel.group.DefaultChannelGroup
 import org.jboss.netty.handler.codec.http.HttpVersion._
 import org.jboss.netty.buffer.ChannelBuffers
@@ -12,9 +13,11 @@ import org.jboss.netty.handler.codec.http.HttpHeaders.Names
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.channel._
-import java.net.{ServerSocket, InetSocketAddress}
-import org.specs2.specification.{ Step, Fragments }
+import java.net.{InetSocketAddress, ServerSocket}
+
 import org.specs2.Specification
+import org.specs2.specification.Step
+import org.specs2.specification.core.Fragments
 
 trait NettyHttpServerContext {
 

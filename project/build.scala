@@ -3,9 +3,6 @@ import Keys._
 import scala.xml._
 import sbtbuildinfo.Plugin._
 import com.typesafe.sbt.pgp.PgpKeys._
-//import com.typesafe.sbtscalariform._
-//import ScalariformPlugin._
-//import ScalariformKeys._
 
 // Shell prompt which show the current project, git branch and build version
 // git magic from Daniel Sobral, adapted by Ivan Porto Carrero to also work with git flow branches
@@ -33,34 +30,14 @@ object ShellPrompt {
 
 object RlSettings {
   val buildOrganization = "org.scalatra.rl"
-  val buildScalaVersion = "2.10.0"
-//
-//  lazy val formatSettings = ScalariformPlugin.scalariformSettings ++ Seq(
-//     preferences in Compile := formattingPreferences,
-//     preferences in Test    := formattingPreferences
-//  )
-//
-//  def formattingPreferences = {
-//     import scalariform.formatter.preferences._
-//     (FormattingPreferences()
-//         setPreference(IndentSpaces, 2)
-//         setPreference(AlignParameters, true)
-//         setPreference(AlignSingleLineCaseStatements, true)
-//         setPreference(DoubleIndentClassDeclaration, true)
-//         setPreference(RewriteArrowSymbols, true)
-//         setPreference(PreserveSpaceBeforeArguments, true))
-//  }
+  val buildScalaVersion = "2.11.0"
 
   val description = SettingKey[String]("description")
-
-  val compilerPlugins = Seq(
-    // compilerPlugin("org.scala-tools.sxr" % "sxr_2.9.0" % "0.2.7")
-  )
 
   val buildSettings = Defaults.defaultSettings ++ Seq(
       organization := buildOrganization,
       scalaVersion := buildScalaVersion,
-      crossScalaVersions := Seq("2.10.0", "2.11.0"),
+      crossScalaVersions := Seq("2.11.0", "2.12.0"),
       javacOptions ++= Seq("-Xlint:unchecked"),
       scalacOptions ++= Seq(
         "-optimize",
@@ -68,13 +45,7 @@ object RlSettings {
         "-unchecked",
         "-Xcheckinit",
         "-encoding", "utf8"),
-      libraryDependencies <+= (scalaVersion) {
-        case "2.9.0" => "org.specs2" %% "specs2" % "1.7.1" % "test"
-        case "2.9.0-1" => "org.specs2" %% "specs2" % "1.8.2" % "test"
-        case v if v.startsWith("2.9.1") => "org.specs2" %% "specs2" % "1.12.4" % "test"
-        case v if v.startsWith("2.9") => "org.specs2" %% "specs2" % "1.12.4.1" % "test"
-        case _ => "org.specs2" %% "specs2" % "2.3.11" % "test"
-      },
+      libraryDependencies += "org.specs2" %% "specs2-core" % "3.8.6" % "test",
       libraryDependencies += "junit" % "junit" % "4.10" % "test",
       crossVersion := CrossVersion.binary,
       resolvers ++= Seq(
@@ -82,20 +53,13 @@ object RlSettings {
         "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
         "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
       ),
-      crossScalaVersions := Seq("2.10.0"),
-//      (excludeFilter in format) <<= (excludeFilter) (_ || "*Spec.scala"),
-      libraryDependencies ++= compilerPlugins,
       artifact in (Compile, packageBin) ~= { (art: Artifact) =>
         if (sys.props("java.version") startsWith "1.7") art.copy(classifier = Some("jdk17")) else art
       },
       autoCompilerPlugins := true,
       parallelExecution in Test := false,
-      shellPrompt  := ShellPrompt.buildShellPrompt,
-      testOptions := Seq(
-        Tests.Argument("console", "junitxml")),
-      testOptions <+= crossTarget map { ct =>
-        Tests.Setup { () => System.setProperty("specs2.junit.outDir", new File(ct, "specs-reports").getAbsolutePath) }
-      }) //++ formatSettings
+      shellPrompt  := ShellPrompt.buildShellPrompt
+  )
 
   val packageSettings = Seq (
     packageOptions <<= (packageOptions, name, version, organization) map {
@@ -154,11 +118,6 @@ object RlBuild extends Build {
 
   import RlSettings._
   val buildShellPrompt =  ShellPrompt.buildShellPrompt
-  object rl {
-    val downloadDomainFile = TaskKey[Int]("updateTldFile", "updates the tld names dat file from mozilla")
-    val domainFile = SettingKey[File]("tldFile", "the file that contains the tld names")
-    val domainFileUrl = SettingKey[URL]("tldFileUrl", "the url from where to download the file that contains the tld names")
-  }
 
   val unpublished = Seq(
     // no artifacts in this project
@@ -179,22 +138,20 @@ object RlBuild extends Build {
                           settings = Project.defaultSettings ++ unpublished ++ Seq(
                             name := "rl-project",
                             scalaVersion := buildScalaVersion,
-                            crossScalaVersions := Seq("2.10.0")
+                            crossScalaVersions := Seq("2.11.0", "2.12.0")
                           )) aggregate(core, followRedirects)
 
   lazy val core = Project ("rl", file("core"), settings = projectSettings ++ buildInfoSettings ++ Seq(
     name := "rl",
-    rl.domainFile <<= (resourceDirectory in Compile) apply { dir =>
-      val rlResource = dir / "rl"
-      rlResource.mkdirs()
-      rlResource / "tld_names.dat"
+    (resourceGenerators in Compile) += task{
+      val rlResource = (resourceManaged in Compile).value / "rl"
+      val f = rlResource / "tld_names.dat"
+      IO.download(url("https://publicsuffix.org/list/effective_tld_names.dat"), f)
+      Seq(f)
     },
     sourceGenerators in Compile <+= buildInfo,
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "rl",
-    rl.domainFileUrl := url("https://publicsuffix.org/list/effective_tld_names.dat"),
-    rl.downloadDomainFile <<= (rl.domainFile, rl.domainFileUrl, streams) map (_ #< _ ! _.log),
-    (compile in Compile) <<= (compile in Compile) dependsOn rl.downloadDomainFile,
     description := "An RFC-3986 compliant URI library."))
 
   lazy val followRedirects = Project("rl-expand", file("expand"), settings = projectSettings ++ Seq(
